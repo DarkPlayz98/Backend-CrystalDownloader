@@ -1,12 +1,13 @@
 FROM node:20-bullseye-slim
 
-# Install Python, pip, FFmpeg, and yt-dlp
+# Install Python 3, pip, FFmpeg, and certificates
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         python3 \
         python3-pip \
         ffmpeg \
         ca-certificates \
+    && ln -s /usr/bin/python3 /usr/local/bin/python \
     && pip3 install --no-cache-dir yt-dlp \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -19,7 +20,7 @@ COPY package.json ./
 # Install Node dependencies
 RUN npm install --omit=dev
 
-# Copy the rest of the project
+# Copy application files
 COPY . .
 
 EXPOSE 3000
