@@ -1,4 +1,4 @@
-FROM node:20-bullseye-slim
+FROM node:20-bookworm-slim
 
 # Install Python 3, pip, FFmpeg, and certificates
 RUN apt-get update \
@@ -7,8 +7,7 @@ RUN apt-get update \
         python3-pip \
         ffmpeg \
         ca-certificates \
-    && ln -s /usr/bin/python3 /usr/local/bin/python \
-    && pip3 install --no-cache-dir yt-dlp \
+    && ln -sf /usr/bin/python3 /usr/local/bin/python \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -20,7 +19,7 @@ COPY package.json ./
 # Install Node dependencies
 RUN npm install --omit=dev
 
-# Copy application files
+# Copy application
 COPY . .
 
 EXPOSE 3000
