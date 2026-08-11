@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const ytdl = require('ytdl-core');
+const ytdl = require('@distube/ytdl-core');
 
 const app = express();
 app.use(express.json());
@@ -16,7 +16,9 @@ app.post('/api/extract', async (req, res) => {
         }
 
         const info = await ytdl.getInfo(url);
-        const format = ytdl.chooseFormat(info.formats, { quality: 'highest' });
+        
+        // Use filter to grab a format that has both video and audio
+        const format = ytdl.chooseFormat(info.formats, { filter: 'audioandvideo', quality: 'highest' });
 
         if (!format) {
              return res.status(404).json({ error: 'No downloadable formats found' });
@@ -32,7 +34,7 @@ app.post('/api/extract', async (req, res) => {
 
     } catch (error) {
         console.error('Extraction Error:', error.message);
-        res.status(500).json({ error: 'Failed to extract video data. YouTube may be blocking the request.' });
+        res.status(500).json({ error: 'Failed to extract video data. YouTube may have updated their blocking.' });
     }
 });
 
