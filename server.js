@@ -5,18 +5,8 @@ const ytDlp = require('yt-dlp-exec');
 const app = express();
 app.use(express.json());
 
-// Set your Vercel domain here before deploying, or use '*' to test globally
-const allowedFrontend = 'https://YOUR_VERCEL_APP_URL.vercel.app';
-
-app.use(cors({
-    origin: function (origin, callback) {
-        if (!origin || origin === allowedFrontend || allowedFrontend === '*') {
-            callback(null, true);
-        } else {
-            callback(new Error('CORS policy violation'));
-        }
-    }
-}));
+// Set to '*' to instantly bypass the CORS error you were getting
+app.use(cors({ origin: '*' }));
 
 app.post('/api/extract', async (req, res) => {
     const { url } = req.body;
