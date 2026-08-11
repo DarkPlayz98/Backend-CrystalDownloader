@@ -1,0 +1,8 @@
+{
+  "name": "Crystal Downloader API",
+  "description": "Backend API and extraction service for downloading YouTube videos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
