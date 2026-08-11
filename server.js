@@ -1,31 +1,87 @@
-const express = require('express');
-const cors = require('cors');
-const ytDlp = require('yt-dlp-exec');
+const express = require("express");
+const cors = require("cors");
+const ytDlp = require("yt-dlp-exec");
 
 const app = express();
+
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// Set to '*' to instantly bypass the CORS error you were getting
-app.use(cors({ origin: '*' }));
-
-app.post('/api/extract', async (req, res) => {
+app.post("/api/extract", async (req, res) => {
     const { url } = req.body;
-    if (!url) return res.status(400).json({ error: 'URL required' });
+
+    if (!url || typeof url !== "string") {
+        return res.status(400).json({
+            error: "URL required"
+        });
+    }
 
     try {
-        const videoInfo = await ytDlp(url, {
-            dumpJson: true,
-            noWarnings: true
+        const output = await ytDlp(url, {
+            dumpSingleJson: true,
+            noWarnings: true,
+            noCheckCertificates: true,
+            preferFreeFormats: true
         });
+
+        // yt-dlp-exec can return stdout as a string
+        const videoInfo =
+            typeof output === "string"
+                ? JSON.parse(output)
+                : output;
+
+        if (!videoInfo) {
+            throw new Error("No video information returned");
+        }
+
+        // Find the best available direct format URL
+        let downloadUrl = videoInfo.url || null;
+
+        if (!downloadUrl && Array.isArray(videoInfo.formats)) {
+            const format = videoInfo.formats
+                .filter(f => f.url)
+                .sort((a, b) => {
+                    const aHeight = a.height || 0;
+                    const bHeight = b.height || 0;
+                    return bHeight - aHeight;
+                })[0];
+
+            downloadUrl = format?.url || null;
+        }
+
+        if (!downloadUrl) {
+            return res.status(500).json({
+                error: "No downloadable URL found"
+            });
+        }
+
         res.json({
-            title: videoInfo.title,
-            thumbnail: videoInfo.thumbnail,
-            downloadUrl: videoInfo.url
+            success: true,
+            title: videoInfo.title || "Unknown title",
+            thumbnail: videoInfo.thumbnail || null,
+            downloadUrl
         });
+
     } catch (error) {
-        res.status(500).json({ error: 'Extraction failed or platform blocked request' });
+        console.error("yt-dlp error:", error);
+
+        res.status(500).json({
+            success: false,
+            error: "Extraction failed",
+            details: error?.message || String(error)
+        });
     }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`API running on port ${PORT}`));
+app.get("/", (req, res) => {
+    res.json({
+        status: "online",
+        message: "yt-dlp API is running"
+    });
+});
+
+const PORT = Number(process.env.PORT) || 10000;
+
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`API running on port ${PORT}`);
+});
